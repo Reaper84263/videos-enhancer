@@ -39,7 +39,18 @@ function getEnhancementProfile() {
   return {
     contrast: 1 + strength / 120,
     saturate: denoise.vibrance,
-    brightness: 1 + strength / 900
+    brightness: 1 + strength / 900,
+    clarity: denoise.clarity
+  };
+}
+
+function getAppliedEnhancement(multiplier = 1) {
+  const { contrast, saturate, brightness, clarity } = getEnhancementProfile();
+  return {
+    contrast: 1 + (contrast - 1) * multiplier,
+    saturate: 1 + (saturate - 1) * multiplier,
+    brightness: 1 + (brightness - 1) * multiplier,
+    clarity: 1 + (clarity - 1) * multiplier
   };
 }
 
@@ -89,7 +100,8 @@ async function renderEnhancedDownload() {
 
   const { width, height } = getTargetDimensions();
   const fps = Number(fpsSelect.value) || 24;
-  const { contrast, saturate, brightness } = getEnhancementProfile();
+  const filterStrength = enhancementApplied ? 1 : 0.9;
+  const { contrast, saturate, brightness, clarity } = getAppliedEnhancement(filterStrength);
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -121,10 +133,20 @@ async function renderEnhancedDownload() {
     }
   });
 
-  context.filter = enhancementApplied ? `contrast(${contrast}) saturate(${saturate}) brightness(${brightness})` : 'none';
+  context.filter = `contrast(${contrast}) saturate(${saturate}) brightness(${brightness})`;
 
   const drawFrame = () => {
+    context.globalCompositeOperation = 'source-over';
+    context.globalAlpha = 1;
     context.drawImage(sourceVideo, 0, 0, width, height);
+
+    if (clarity > 1) {
+      context.globalCompositeOperation = 'overlay';
+      context.globalAlpha = Math.min(0.24, (clarity - 1) * 0.7);
+      context.drawImage(sourceVideo, 0, 0, width, height);
+      context.globalCompositeOperation = 'source-over';
+      context.globalAlpha = 1;
+    }
   };
 
   let drawing = true;
@@ -181,12 +203,11 @@ function syncPreviewStats() {
   statSharpness.textContent = `+${Math.round(120 + strength * 1.5)}%`;
 
   if (enhancementApplied) {
+    const { contrast, saturate, brightness, clarity } = getAppliedEnhancement(1);
     const sharpenBoost = 1 + strength / 80;
-    const contrast = 1 + strength / 120;
-    const brightness = 1 + strength / 900;
-    enhancedVideo.style.filter = `contrast(${contrast}) saturate(${denoise.vibrance}) brightness(${brightness})`;
-    enhancedVideo.style.transform = `scale(${Math.min(1.04, sharpenBoost)})`;
-    enhancedVideo.style.boxShadow = `0 0 ${4 + strength / 8}px rgba(63, 165, 255, 0.45)`;
+    enhancedVideo.style.filter = `contrast(${contrast}) saturate(${saturate}) brightness(${brightness})`;
+    enhancedVideo.style.transform = `scale(${Math.min(1.04, sharpenBoost + (clarity - 1) * 0.08)})`;
+    enhancedVideo.style.boxShadow = `0 0 ${4 + strength / 8}px rgba(63, 165, 255, ${Math.min(0.65, 0.35 + (clarity - 1) * 0.6)})`;
     enhancedVideo.style.transformOrigin = 'center';
   } else {
     enhancedVideo.style.filter = 'none';
@@ -273,6 +294,12 @@ startButton.addEventListener('click', () => {
 downloadButton.addEventListener('click', async () => {
   if (!uploadedUrl || isRendering) {
     return;
+  }
+
+  if (!enhancementApplied) {
+    enhancementApplied = true;
+    syncPreviewStats();
+    setStatus('Applying enhancement profile before export...');
   }
 
   isRendering = true;
