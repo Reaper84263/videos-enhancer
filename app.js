@@ -34,13 +34,15 @@ function setStatus(message) {
 
 function getEnhancementProfile() {
   const strength = Number(strengthRange.value);
-  const denoise = denoiseMap[denoiseSelect.value];
+  const baseContrast = 1 + strength / 50;
+  const baseSaturation = 1 + strength / 100;
+  const baseBrightness = 1 + strength / 200;
 
   return {
-    contrast: 1 + strength / 70,
-    saturate: denoise.vibrance + strength / 500,
-    brightness: 1 + strength / 500,
-    clarity: denoise.clarity + strength / 260
+    contrast: baseContrast,
+    saturate: baseSaturation,
+    brightness: baseBrightness,
+    clarity: 1 + strength / 120
   };
 }
 
@@ -122,9 +124,11 @@ async function renderEnhancedDownload() {
 
   const mimeType = pickRecorderMimeType();
   const chunks = [];
+  const pixelCount = width * height;
+  const targetBitrate = pixelCount >= 3840 * 2160 ? 12_000_000 : pixelCount >= 1920 * 1080 ? 8_000_000 : 5_000_000;
   const recorder = new MediaRecorder(outputStream, {
     mimeType,
-    videoBitsPerSecond: 8_000_000
+    videoBitsPerSecond: targetBitrate
   });
 
   recorder.addEventListener('dataavailable', (event) => {
@@ -140,7 +144,7 @@ async function renderEnhancedDownload() {
     context.globalAlpha = 1;
     context.drawImage(sourceVideo, 0, 0, width, height);
 
-    if (clarity > 1) {
+    if (clarity > 1.08) {
       context.globalCompositeOperation = 'overlay';
       context.globalAlpha = Math.min(0.24, (clarity - 1) * 0.7);
       context.drawImage(sourceVideo, 0, 0, width, height);
@@ -150,23 +154,40 @@ async function renderEnhancedDownload() {
   };
 
   let drawing = true;
-  const tick = () => {
-    if (!drawing || sourceVideo.paused || sourceVideo.ended) {
+  const scheduleFrame = () => {
+    if (!drawing || sourceVideo.ended) {
       return;
     }
-    drawFrame();
-    requestAnimationFrame(tick);
+
+    if ('requestVideoFrameCallback' in sourceVideo) {
+      sourceVideo.requestVideoFrameCallback(() => {
+        drawFrame();
+        scheduleFrame();
+      });
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      drawFrame();
+      scheduleFrame();
+    });
   };
 
   recorder.start(250);
   await audioContext.resume();
   await sourceVideo.play();
-  tick();
+  scheduleFrame();
 
+  let lastStatusUpdate = 0;
   sourceVideo.addEventListener('timeupdate', () => {
     if (!sourceVideo.duration || !Number.isFinite(sourceVideo.duration)) {
       return;
     }
+    const now = performance.now();
+    if (now - lastStatusUpdate < 250) {
+      return;
+    }
+    lastStatusUpdate = now;
     const percent = Math.min(100, Math.round((sourceVideo.currentTime / sourceVideo.duration) * 100));
     setStatus(`Rendering enhanced download... ${percent}%`);
   });
