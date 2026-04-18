@@ -26,7 +26,7 @@ let uploadedUrl = '';
 let enhancementApplied = false;
 let renderedDownloadUrl = '';
 let isRendering = false;
-let isSyncingPlayback = false;
+let isMirroringPlayback = false;
 
 function setStatus(message) {
   statusBox.textContent = message;
@@ -200,18 +200,23 @@ function syncPreviewStats() {
 }
 
 function syncPlayback(source, target) {
-  if (!target.src || isSyncingPlayback) {
+  if (!target.src || isMirroringPlayback) {
     return;
   }
 
-  isSyncingPlayback = true;
+  isMirroringPlayback = true;
   if (Math.abs(target.currentTime - source.currentTime) > 0.12) {
     target.currentTime = source.currentTime;
   }
 
-  const syncPromise = source.paused ? Promise.resolve(target.pause()) : target.play().catch(() => {});
+  const syncPromise = source.paused
+    ? (!target.paused ? Promise.resolve(target.pause()) : Promise.resolve())
+    : (target.paused ? target.play().catch(() => {}) : Promise.resolve());
+
   Promise.resolve(syncPromise).finally(() => {
-    isSyncingPlayback = false;
+    setTimeout(() => {
+      isMirroringPlayback = false;
+    }, 0);
   });
 }
 
@@ -307,41 +312,15 @@ downloadButton.addEventListener('click', async () => {
 
 originalVideo.addEventListener('play', () => syncPlayback(originalVideo, enhancedVideo));
 enhancedVideo.addEventListener('play', () => syncPlayback(enhancedVideo, originalVideo));
-
-originalVideo.addEventListener('pause', () => {
-  if (isSyncingPlayback) {
-    return;
-  }
-  enhancedVideo.pause();
-});
-
-enhancedVideo.addEventListener('pause', () => {
-  if (isSyncingPlayback) {
-    return;
-  }
-  originalVideo.pause();
-});
+originalVideo.addEventListener('pause', () => syncPlayback(originalVideo, enhancedVideo));
+enhancedVideo.addEventListener('pause', () => syncPlayback(enhancedVideo, originalVideo));
 
 originalVideo.addEventListener('seeked', () => {
-  if (isSyncingPlayback) {
-    return;
-  }
-  if (enhancedVideo.src) {
-    isSyncingPlayback = true;
-    enhancedVideo.currentTime = originalVideo.currentTime;
-    isSyncingPlayback = false;
-  }
+  syncPlayback(originalVideo, enhancedVideo);
 });
 
 enhancedVideo.addEventListener('seeked', () => {
-  if (isSyncingPlayback) {
-    return;
-  }
-  if (originalVideo.src) {
-    isSyncingPlayback = true;
-    originalVideo.currentTime = enhancedVideo.currentTime;
-    isSyncingPlayback = false;
-  }
+  syncPlayback(enhancedVideo, originalVideo);
 });
 
 startButton.disabled = true;
