@@ -24,6 +24,10 @@ const denoiseMap = {
 
 let uploadedUrl = '';
 
+function setStatus(message) {
+  statusBox.textContent = message;
+}
+
 function syncPreviewStats() {
   const [width, height] = resolutionSelect.value.split('x');
   const fps = fpsSelect.value;
@@ -43,15 +47,30 @@ function syncPreviewStats() {
   enhancedVideo.style.transform = `scale(${Math.min(1.02, sharpen)})`;
   enhancedVideo.style.transformOrigin = 'center';
 
-  // Keep a responsive aspect ratio target using width/height values.
   const aspectRatio = `${width} / ${height}`;
   originalVideo.style.aspectRatio = aspectRatio;
   enhancedVideo.style.aspectRatio = aspectRatio;
 }
 
+function syncPlayback(source, target) {
+  if (!target.src) {
+    return;
+  }
+
+  target.currentTime = source.currentTime;
+  if (!source.paused) {
+    target.play().catch(() => {});
+  }
+}
+
 videoUpload.addEventListener('change', () => {
   const file = videoUpload.files?.[0];
   if (!file) {
+    return;
+  }
+
+  if (!file.type.startsWith('video/')) {
+    setStatus('Unsupported file type. Please upload a valid video file.');
     return;
   }
 
@@ -62,14 +81,16 @@ videoUpload.addEventListener('change', () => {
   uploadedUrl = URL.createObjectURL(file);
   originalVideo.src = uploadedUrl;
   enhancedVideo.src = uploadedUrl;
+
+  startButton.disabled = false;
   downloadButton.disabled = true;
-  statusBox.textContent = `Loaded: ${file.name}. Tune settings and click Start Enhance.`;
+  setStatus(`Loaded: ${file.name}. Tune settings and click Start Enhance.`);
   syncPreviewStats();
 });
 
 startButton.addEventListener('click', () => {
   if (!uploadedUrl) {
-    statusBox.textContent = 'Please upload a video first.';
+    setStatus('Please upload a video first.');
     return;
   }
 
@@ -80,7 +101,7 @@ startButton.addEventListener('click', () => {
   }
 
   downloadButton.disabled = false;
-  statusBox.textContent = 'Enhancement profile applied. Preview ready and download unlocked.';
+  setStatus('Enhancement profile applied. Preview ready and download unlocked.');
 });
 
 downloadButton.addEventListener('click', () => {
@@ -93,7 +114,7 @@ downloadButton.addEventListener('click', () => {
   link.href = uploadedUrl;
   link.download = `${name}-enhanced-preview.webm`;
   link.click();
-  statusBox.textContent = 'Downloaded preview source. Integrate with ffmpeg/ML backend for true re-encoding.';
+  setStatus('Downloaded preview source. Integrate with ffmpeg/ML backend for true re-encoding.');
 });
 
 [resolutionSelect, fpsSelect, strengthRange, denoiseSelect].forEach((el) => {
@@ -101,15 +122,15 @@ downloadButton.addEventListener('click', () => {
   el.addEventListener('change', syncPreviewStats);
 });
 
-originalVideo.addEventListener('play', () => {
-  if (enhancedVideo.src) {
-    enhancedVideo.currentTime = originalVideo.currentTime;
-    enhancedVideo.play().catch(() => {});
-  }
-});
+originalVideo.addEventListener('play', () => syncPlayback(originalVideo, enhancedVideo));
+enhancedVideo.addEventListener('play', () => syncPlayback(enhancedVideo, originalVideo));
 
 originalVideo.addEventListener('pause', () => {
   enhancedVideo.pause();
+});
+
+enhancedVideo.addEventListener('pause', () => {
+  originalVideo.pause();
 });
 
 originalVideo.addEventListener('seeked', () => {
@@ -118,4 +139,11 @@ originalVideo.addEventListener('seeked', () => {
   }
 });
 
+enhancedVideo.addEventListener('seeked', () => {
+  if (originalVideo.src) {
+    originalVideo.currentTime = enhancedVideo.currentTime;
+  }
+});
+
+startButton.disabled = true;
 syncPreviewStats();
