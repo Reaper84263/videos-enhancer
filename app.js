@@ -26,6 +26,7 @@ let uploadedUrl = '';
 let enhancementApplied = false;
 let renderedDownloadUrl = '';
 let isRendering = false;
+let isSyncingPlayback = false;
 
 function setStatus(message) {
   statusBox.textContent = message;
@@ -199,14 +200,19 @@ function syncPreviewStats() {
 }
 
 function syncPlayback(source, target) {
-  if (!target.src) {
+  if (!target.src || isSyncingPlayback) {
     return;
   }
 
-  target.currentTime = source.currentTime;
-  if (!source.paused) {
-    target.play().catch(() => {});
+  isSyncingPlayback = true;
+  if (Math.abs(target.currentTime - source.currentTime) > 0.12) {
+    target.currentTime = source.currentTime;
   }
+
+  const syncPromise = source.paused ? Promise.resolve(target.pause()) : target.play().catch(() => {});
+  Promise.resolve(syncPromise).finally(() => {
+    isSyncingPlayback = false;
+  });
 }
 
 videoUpload.addEventListener('change', () => {
@@ -303,22 +309,38 @@ originalVideo.addEventListener('play', () => syncPlayback(originalVideo, enhance
 enhancedVideo.addEventListener('play', () => syncPlayback(enhancedVideo, originalVideo));
 
 originalVideo.addEventListener('pause', () => {
+  if (isSyncingPlayback) {
+    return;
+  }
   enhancedVideo.pause();
 });
 
 enhancedVideo.addEventListener('pause', () => {
+  if (isSyncingPlayback) {
+    return;
+  }
   originalVideo.pause();
 });
 
 originalVideo.addEventListener('seeked', () => {
+  if (isSyncingPlayback) {
+    return;
+  }
   if (enhancedVideo.src) {
+    isSyncingPlayback = true;
     enhancedVideo.currentTime = originalVideo.currentTime;
+    isSyncingPlayback = false;
   }
 });
 
 enhancedVideo.addEventListener('seeked', () => {
+  if (isSyncingPlayback) {
+    return;
+  }
   if (originalVideo.src) {
+    isSyncingPlayback = true;
     originalVideo.currentTime = enhancedVideo.currentTime;
+    isSyncingPlayback = false;
   }
 });
 
