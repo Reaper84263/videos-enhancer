@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Video Enhancer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">Video <span>Enhancer</span></div>
+        <div class="chip">4K • 8K Ready</div>
+      </header>
+
+      <section class="hero">
+        <h1>Enhance your video quality to 4K or 8K</h1>
+        <p>
+          Upload your clip, tune AI enhancement settings, preview the result side-by-side, and
+          export an enhanced version optimized for high-resolution delivery.
+        </p>
+      </section>
+
+      <section class="panel controls-panel">
+        <h2>Enhancement Controls</h2>
+
+        <label class="field-label" for="videoUpload">Upload Video</label>
+        <input id="videoUpload" type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm" />
+        <p class="field-hint">Accepted: MP4, MOV, MKV, WEBM</p>
+
+        <label class="field-label" for="resolutionSelect">Output Resolution</label>
+        <select id="resolutionSelect">
+          <option value="1280x720" selected>720p (1280×720)</option>
+          <option value="1920x1080">1080p (1920×1080)</option>
+          <option value="3840x2160">4K (3840×2160)</option>
+        </select>
+
+        <label class="field-label" for="fpsSelect">Output FPS</label>
+        <select id="fpsSelect">
+          <option value="24" selected>24 FPS (Cinema)</option>
+          <option value="30">30 FPS (Standard)</option>
+          <option value="60">60 FPS (Smooth)</option>
+        </select>
+
+        <label class="field-label" for="strengthRange">AI Enhancement Strength</label>
+        <input id="strengthRange" type="range" min="0" max="100" value="70" />
+        <div class="metric-row">
+          <span>Current strength</span>
+          <strong id="strengthValue">70%</strong>
+        </div>
+
+        <label class="field-label" for="denoiseSelect">Denoise Level</label>
+        <select id="denoiseSelect">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+
+        <div class="actions-row">
+          <button id="startButton" class="btn btn-primary">Start Enhance</button>
+          <button id="downloadButton" class="btn" disabled>Download</button>
+        </div>
+
+        <div class="status-box" id="statusBox">Upload a video to begin.</div>
+      </section>
+
+      <section class="panel preview-panel">
+        <h2>Live Preview</h2>
+        <div class="preview-grid">
+          <div>
+            <p class="preview-title">ORIGINAL</p>
+            <video id="originalVideo" controls playsinline></video>
+          </div>
+          <div>
+            <p class="preview-title">ENHANCED PREVIEW</p>
+            <video id="enhancedVideo" controls playsinline muted></video>
+            <p class="preview-target" id="previewTarget">Preview target: 720p @ 24 FPS</p>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div>
+            <strong id="statRes">720p</strong>
+            <span>Target Resolution</span>
+          </div>
+          <div>
+            <strong id="statSharpness">+226%</strong>
+            <span>Estimated Sharpness Gain</span>
+          </div>
+          <div>
+            <strong id="statDenoise">Medium</strong>
+            <span>Noise Reduction</span>
+          </div>
+          <div>
+            <strong id="statFps">24 FPS</strong>
+            <span>Output Frame Rate</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
