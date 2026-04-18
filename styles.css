@@ -203,6 +203,7 @@ video {
   background: #000;
   height: 300px;
   object-fit: cover;
+  transition: filter 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
 .preview-target {
