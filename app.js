@@ -37,10 +37,10 @@ function getEnhancementProfile() {
   const denoise = denoiseMap[denoiseSelect.value];
 
   return {
-    contrast: 1 + strength / 120,
-    saturate: denoise.vibrance,
-    brightness: 1 + strength / 900,
-    clarity: denoise.clarity
+    contrast: 1 + strength / 70,
+    saturate: denoise.vibrance + strength / 500,
+    brightness: 1 + strength / 500,
+    clarity: denoise.clarity + strength / 260
   };
 }
 
@@ -204,9 +204,9 @@ function syncPreviewStats() {
 
   if (enhancementApplied) {
     const { contrast, saturate, brightness, clarity } = getAppliedEnhancement(1);
-    const sharpenBoost = 1 + strength / 80;
+    const sharpenBoost = 1 + strength / 55;
     enhancedVideo.style.filter = `contrast(${contrast}) saturate(${saturate}) brightness(${brightness})`;
-    enhancedVideo.style.transform = `scale(${Math.min(1.04, sharpenBoost + (clarity - 1) * 0.08)})`;
+    enhancedVideo.style.transform = `scale(${Math.min(1.065, sharpenBoost + (clarity - 1) * 0.12)})`;
     enhancedVideo.style.boxShadow = `0 0 ${4 + strength / 8}px rgba(63, 165, 255, ${Math.min(0.65, 0.35 + (clarity - 1) * 0.6)})`;
     enhancedVideo.style.transformOrigin = 'center';
   } else {
@@ -332,9 +332,30 @@ downloadButton.addEventListener('click', async () => {
   }
 });
 
-[resolutionSelect, fpsSelect, strengthRange, denoiseSelect].forEach((el) => {
+[resolutionSelect, fpsSelect].forEach((el) => {
   el.addEventListener('input', syncPreviewStats);
   el.addEventListener('change', syncPreviewStats);
+});
+
+strengthRange.addEventListener('input', () => {
+  if (uploadedUrl) {
+    enhancementApplied = true;
+  }
+  syncPreviewStats();
+});
+
+denoiseSelect.addEventListener('input', () => {
+  if (uploadedUrl) {
+    enhancementApplied = true;
+  }
+  syncPreviewStats();
+});
+
+denoiseSelect.addEventListener('change', () => {
+  if (uploadedUrl) {
+    enhancementApplied = true;
+  }
+  syncPreviewStats();
 });
 
 originalVideo.addEventListener('play', () => syncPlayback(originalVideo, enhancedVideo));
