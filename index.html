@@ -1,22 +1,70 @@
-<label class="field-label" for="resolutionSelect">Output Resolution</label>
-<select id="resolutionSelect">
-  <option value="426x240">240p (426×240)</option>
-  <option value="640x360">360p (640×360)</option>
-  <option value="854x480">480p (854×480)</option>
-  <option value="1280x720" selected>720p (1280×720)</option>
-  <option value="1920x1080">1080p (1920×1080)</option>
-  <option value="2560x1440">1440p (2560×1440)</option>
-  <option value="3840x2160">4K (3840×2160)</option>
-  <option value="7680x4320">8K (7680×4320)</option>
-</select>
 
-<label class="field-label" for="fpsSelect">Output FPS</label>
-<select id="fpsSelect">
-  <option value="24" selected>24 FPS (Cinema)</option>
-  <option value="25">25 FPS (PAL)</option>
-  <option value="30">30 FPS (Standard)</option>
-  <option value="48">48 FPS (High Frame Rate)</option>
-  <option value="50">50 FPS (Broadcast)</option>
-  <option value="60">60 FPS (Smooth)</option>
-  <option value="120">120 FPS (Ultra Smooth)</option>
-</select>
+   </head>
+   <body>
+     <main class="app-shell">
+       <header class="topbar">
+         <div class="brand">Video <span>Enhancer</span></div>
+         <div class="chip">4K • 8K Ready</div>
+       </header>
+ 
+       <section class="hero">
+         <h1>Enhance your video quality to 4K or 8K</h1>
+         <p>
+           Upload your clip, tune AI enhancement settings, preview the result side-by-side, and
+           export an enhanced version optimized for high-resolution delivery.
+         </p>
+       </section>
+ 
+       <section class="panel controls-panel">
+         <h2>Enhancement Controls</h2>
+ 
+         <label class="field-label" for="videoUpload">Upload Video</label>
+         <input id="videoUpload" type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm" />
+         <p class="field-hint">Accepted: MP4, MOV, MKV, WEBM</p>
+ 
+         <label class="field-label" for="resolutionSelect">Output Resolution</label>
+         <select id="resolutionSelect">
++          <option value="426x240">240p (426×240)</option>
++          <option value="640x360">360p (640×360)</option>
++          <option value="854x480">480p (854×480)</option>
+           <option value="1280x720" selected>720p (1280×720)</option>
+           <option value="1920x1080">1080p (1920×1080)</option>
++          <option value="2560x1440">1440p (2560×1440)</option>
+           <option value="3840x2160">4K (3840×2160)</option>
++          <option value="7680x4320">8K (7680×4320)</option>
+         </select>
+ 
+         <label class="field-label" for="fpsSelect">Output FPS</label>
+         <select id="fpsSelect">
+           <option value="24" selected>24 FPS (Cinema)</option>
++          <option value="25">25 FPS (PAL)</option>
+           <option value="30">30 FPS (Standard)</option>
++          <option value="48">48 FPS (High Frame Rate)</option>
++          <option value="50">50 FPS (Broadcast)</option>
+           <option value="60">60 FPS (Smooth)</option>
++          <option value="120">120 FPS (Ultra Smooth)</option>
+         </select>
+ 
+         <label class="field-label" for="strengthRange">AI Enhancement Strength</label>
+         <input id="strengthRange" type="range" min="0" max="100" value="70" />
+         <div class="metric-row">
+           <span>Current strength</span>
+           <strong id="strengthValue">70%</strong>
+         </div>
+ 
+         <label class="field-label" for="denoiseSelect">Denoise Level</label>
+         <select id="denoiseSelect">
+           <option value="low">Low</option>
+           <option value="medium" selected>Medium</option>
+           <option value="high">High</option>
+         </select>
+ 
+         <div class="actions-row">
+           <button id="startButton" class="btn btn-primary">Start Enhance</button>
+           <button id="downloadButton" class="btn" disabled>Download</button>
+         </div>
+ 
+         <div class="status-box" id="statusBox">Upload a video to begin.</div>
+       </section>
+ 
+       <section class="panel preview-panel">
